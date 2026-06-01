@@ -4,6 +4,7 @@
 import { App } from '@slack/bolt';
 import dotenv from 'dotenv';
 import { handleHelpCommand } from './handlers/help';
+import { handleCarbonCommand } from './handlers/carbon';
 
 dotenv.config();
 
@@ -32,15 +33,25 @@ app.event('app_mention', async ({ event, say }) => {
   }
 });
 
-// /harchos help command
+// /harchos command router
 app.command('/harchos', async ({ command, ack, respond }) => {
   await ack();
 
-  const subCommand = command.text.trim().toLowerCase();
+  const subCommand = command.text.trim().toLowerCase().split(' ')[0];
 
-  if (subCommand === 'help' || subCommand === '') {
-    const helpText = await handleHelpCommand(command);
-    await respond({ text: helpText, response_type: 'in_channel' });
+  switch (subCommand) {
+    case 'help':
+    case '':
+      await respond({ text: await handleHelpCommand(command), response_type: 'in_channel' });
+      break;
+    case 'carbon':
+      await respond({ text: await handleCarbonCommand(command), response_type: 'in_channel' });
+      break;
+    default:
+      await respond({
+        text: `Unknown command: \`${subCommand}\`. Type \`/harchos help\` for available commands.`,
+        response_type: 'ephemeral',
+      });
   }
 });
 

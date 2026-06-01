@@ -1,5 +1,6 @@
 // HarchOS API client
 // Talks to the HarchOS platform API
+// Includes simple in-memory caching to reduce API calls
 
 import fetch from 'node-fetch';
 
@@ -34,18 +35,49 @@ interface SystemStatus {
   regions: { name: string; status: string }[];
 }
 
+// Simple cache entry
+interface CacheEntry {
+  data: any;
+  timestamp: number;
+}
+
 export class HarchOSApiClient {
   private baseUrl: string;
   private timeout: number;
+  private cache: Map<string, CacheEntry>;
+  private cacheTtl: number;
 
-  constructor(baseUrl?: string, timeout: number = 10000) {
+  constructor(baseUrl?: string, timeout: number = 10000, cacheTtl: number = 60000) {
     this.baseUrl = baseUrl || HARCHOS_API_BASE;
     this.timeout = timeout;
+    this.cache = new Map();
+    this.cacheTtl = cacheTtl;
+  }
+
+  private getCached(key: string): any | null {
+    const entry = this.cache.get(key);
+    if (!entry) return null;
+    if (Date.now() - entry.timestamp > this.cacheTtl) {
+      this.cache.delete(key);
+      return null;
+    }
+    return entry.data;
+  }
+
+  private setCache(key: string, data: any): void {
+    this.cache.set(key, { data, timestamp: Date.now() });
   }
 
   private async request(endpoint: string): Promise<any> {
     const url = `${this.baseUrl}${endpoint}`;
     
+    // Check cache first
+    const cached = this.getCached(endpoint);
+    if (cached) {
+      console.log(`Cache hit for ${endpoint}`);
+      return cached;
+    }
+
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), this.timeout);
@@ -59,7 +91,9 @@ export class HarchOSApiClient {
         throw new Error(`API returned ${response.status}: ${response.statusText}`);
       }
 
-      return await response.json();
+      const data = await response.json();
+      this.setCache(endpoint, data);
+      return data;
     } catch (error: any) {
       if (error.name === 'AbortError') {
         throw new Error(`HarchOS API request timed out after ${this.timeout}ms`);
@@ -94,7 +128,11 @@ export class HarchOSApiClient {
   async getSystemStatus(): Promise<SystemStatus> {
     return this.request('/status');
   }
+
+  clearCache(): void {
+    this.cache.clear();
+  }
 }
 
-// Export a singleton instance
+// Export singleton instance
 export const harchosApi = new HarchOSApiClient();

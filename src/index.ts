@@ -9,7 +9,8 @@ dotenv.config();
 const { SLACK_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_SIGNING_SECRET } = process.env;
 
 if (!SLACK_BOT_TOKEN || !SLACK_APP_TOKEN || !SLACK_SIGNING_SECRET) {
-  console.error("Missing Slack credentials in .env file!");
+  console.error("Missing Slack credentials! Check your .env file.");
+  console.error("Required: SLACK_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_SIGNING_SECRET");
   process.exit(1);
 }
 
@@ -22,10 +23,14 @@ const app = new App({
 
 // Handle when someone mentions the bot
 app.event('app_mention', async ({ event, say }) => {
-  console.log(`Mentioned by ${event.user}: ${event.text}`);
-  await say({
-    text: `Hey <@${event.user}>! 👋 I'm HarchOS Bot. Type /harchos help to see what I can do!`,
-  });
+  try {
+    console.log(`Mentioned by ${event.user}: ${event.text}`);
+    await say({
+      text: `Hey <@${event.user}>! 👋 I'm HarchOS Bot. Type \`/harchos help\` to see what I can do!`,
+    });
+  } catch (error) {
+    console.error('Error handling app_mention:', error);
+  }
 });
 
 (async () => {

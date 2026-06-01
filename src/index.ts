@@ -16,6 +16,7 @@ const { SLACK_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_SIGNING_SECRET } = process.env;
 
 if (!SLACK_BOT_TOKEN || !SLACK_APP_TOKEN || !SLACK_SIGNING_SECRET) {
   console.error("Missing Slack credentials! Check your .env file.");
+  console.error("Required: SLACK_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_SIGNING_SECRET");
   process.exit(1);
 }
 
@@ -26,6 +27,7 @@ const app = new App({
   appToken: SLACK_APP_TOKEN,
 });
 
+// Handle app mentions
 app.event('app_mention', async ({ event, say }) => {
   try {
     await say({
@@ -36,39 +38,47 @@ app.event('app_mention', async ({ event, say }) => {
   }
 });
 
+// Command router
 app.command('/harchos', async ({ command, ack, respond }) => {
   await ack();
 
   const subCommand = command.text.trim().toLowerCase().split(' ')[0];
+  const startTime = Date.now();
 
   try {
+    let response: string;
+
     switch (subCommand) {
       case 'help':
       case '':
-        await respond({ text: await handleHelpCommand(command), response_type: 'in_channel' });
+        response = await handleHelpCommand(command);
         break;
       case 'carbon':
-        await respond({ text: await handleCarbonCommand(command), response_type: 'in_channel' });
+        response = await handleCarbonCommand(command);
         break;
       case 'gpu':
-        await respond({ text: await handleGpuCommand(command), response_type: 'in_channel' });
+        response = await handleGpuCommand(command);
         break;
       case 'price':
-        await respond({ text: await handlePriceCommand(command), response_type: 'in_channel' });
+        response = await handlePriceCommand(command);
         break;
       case 'status':
-        await respond({ text: await handleStatusCommand(command), response_type: 'in_channel' });
+        response = await handleStatusCommand(command);
         break;
       default:
-        await respond({
-          text: `Unknown command: \`${subCommand}\`. Type \`/harchos help\` for available commands.`,
-          response_type: 'ephemeral',
-        });
+        response = `Unknown command: \`${subCommand}\`. Type \`/harchos help\` for available commands.`;
+        await respond({ text: response, response_type: 'ephemeral' });
+        return;
     }
+
+    const elapsed = Date.now() - startTime;
+    console.log(`Command /harchos ${subCommand} completed in ${elapsed}ms`);
+
+    await respond({ text: response, response_type: 'in_channel' });
   } catch (error) {
     console.error('Command handler error:', error);
     await respond({
-      text: '❌ Something went wrong processing your command. Try again.',
+      text: '❌ Something went wrong processing your command. Try again or use `/harchos status` to check if the platform is up.',
       response_type: 'ephemeral',
     });
   }
@@ -78,6 +88,7 @@ app.command('/harchos', async ({ command, ack, respond }) => {
   try {
     await app.start();
     console.log("⚡ HarchOS Slack Bot is running!");
+    console.log("Available commands: help, carbon, gpu, price, status");
   } catch (error) {
     console.error("Failed to start app:", error);
     process.exit(1);

@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import { handleHelpCommand } from './handlers/help';
 import { handleCarbonCommand } from './handlers/carbon';
 import { handleGpuCommand } from './handlers/gpu';
+import { handlePriceCommand } from './handlers/price';
 
 dotenv.config();
 
@@ -48,6 +49,9 @@ app.command('/harchos', async ({ command, ack, respond }) => {
       break;
     case 'gpu':
       await respond({ text: await handleGpuCommand(command), response_type: 'in_channel' });
+      break;
+    case 'price':
+      await respond({ text: await handlePriceCommand(command), response_type: 'in_channel' });
       break;
     default:
       await respond({

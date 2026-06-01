@@ -3,6 +3,7 @@
 
 import { App } from '@slack/bolt';
 import dotenv from 'dotenv';
+import { handleHelpCommand } from './handlers/help';
 
 dotenv.config();
 
@@ -10,7 +11,6 @@ const { SLACK_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_SIGNING_SECRET } = process.env;
 
 if (!SLACK_BOT_TOKEN || !SLACK_APP_TOKEN || !SLACK_SIGNING_SECRET) {
   console.error("Missing Slack credentials! Check your .env file.");
-  console.error("Required: SLACK_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_SIGNING_SECRET");
   process.exit(1);
 }
 
@@ -21,15 +21,26 @@ const app = new App({
   appToken: SLACK_APP_TOKEN,
 });
 
-// Handle when someone mentions the bot
+// App mention handler
 app.event('app_mention', async ({ event, say }) => {
   try {
-    console.log(`Mentioned by ${event.user}: ${event.text}`);
     await say({
-      text: `Hey <@${event.user}>! 👋 I'm HarchOS Bot. Type \`/harchos help\` to see what I can do!`,
+      text: `Hey <@${event.user}>! 👋 Type \`/harchos help\` to see what I can do!`,
     });
   } catch (error) {
     console.error('Error handling app_mention:', error);
+  }
+});
+
+// /harchos help command
+app.command('/harchos', async ({ command, ack, respond }) => {
+  await ack();
+
+  const subCommand = command.text.trim().toLowerCase();
+
+  if (subCommand === 'help' || subCommand === '') {
+    const helpText = await handleHelpCommand(command);
+    await respond({ text: helpText, response_type: 'in_channel' });
   }
 });
 

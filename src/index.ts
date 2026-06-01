@@ -1,5 +1,6 @@
 // HarchOS Slack Bot
 // Built by Amine for Hack Club Stardance
+// Commands: help, carbon, gpu, price, status
 
 import { App } from '@slack/bolt';
 import dotenv from 'dotenv';
@@ -7,6 +8,7 @@ import { handleHelpCommand } from './handlers/help';
 import { handleCarbonCommand } from './handlers/carbon';
 import { handleGpuCommand } from './handlers/gpu';
 import { handlePriceCommand } from './handlers/price';
+import { handleStatusCommand } from './handlers/status';
 
 dotenv.config();
 
@@ -39,25 +41,36 @@ app.command('/harchos', async ({ command, ack, respond }) => {
 
   const subCommand = command.text.trim().toLowerCase().split(' ')[0];
 
-  switch (subCommand) {
-    case 'help':
-    case '':
-      await respond({ text: await handleHelpCommand(command), response_type: 'in_channel' });
-      break;
-    case 'carbon':
-      await respond({ text: await handleCarbonCommand(command), response_type: 'in_channel' });
-      break;
-    case 'gpu':
-      await respond({ text: await handleGpuCommand(command), response_type: 'in_channel' });
-      break;
-    case 'price':
-      await respond({ text: await handlePriceCommand(command), response_type: 'in_channel' });
-      break;
-    default:
-      await respond({
-        text: `Unknown command: \`${subCommand}\`. Type \`/harchos help\` for available commands.`,
-        response_type: 'ephemeral',
-      });
+  try {
+    switch (subCommand) {
+      case 'help':
+      case '':
+        await respond({ text: await handleHelpCommand(command), response_type: 'in_channel' });
+        break;
+      case 'carbon':
+        await respond({ text: await handleCarbonCommand(command), response_type: 'in_channel' });
+        break;
+      case 'gpu':
+        await respond({ text: await handleGpuCommand(command), response_type: 'in_channel' });
+        break;
+      case 'price':
+        await respond({ text: await handlePriceCommand(command), response_type: 'in_channel' });
+        break;
+      case 'status':
+        await respond({ text: await handleStatusCommand(command), response_type: 'in_channel' });
+        break;
+      default:
+        await respond({
+          text: `Unknown command: \`${subCommand}\`. Type \`/harchos help\` for available commands.`,
+          response_type: 'ephemeral',
+        });
+    }
+  } catch (error) {
+    console.error('Command handler error:', error);
+    await respond({
+      text: '❌ Something went wrong processing your command. Try again.',
+      response_type: 'ephemeral',
+    });
   }
 });
 

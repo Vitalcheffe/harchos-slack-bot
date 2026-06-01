@@ -36,20 +36,36 @@ interface SystemStatus {
 
 export class HarchOSApiClient {
   private baseUrl: string;
+  private timeout: number;
 
-  constructor(baseUrl?: string) {
+  constructor(baseUrl?: string, timeout: number = 10000) {
     this.baseUrl = baseUrl || HARCHOS_API_BASE;
+    this.timeout = timeout;
   }
 
   private async request(endpoint: string): Promise<any> {
     const url = `${this.baseUrl}${endpoint}`;
-    const response = await fetch(url);
+    
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
-    if (!response.ok) {
-      throw new Error(`HarchOS API error: ${response.status} ${response.statusText}`);
+      const response = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorBody = await response.text().catch(() => 'Unknown error');
+        console.error(`HarchOS API ${response.status}: ${errorBody}`);
+        throw new Error(`API returned ${response.status}: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        throw new Error(`HarchOS API request timed out after ${this.timeout}ms`);
+      }
+      throw new Error(`Failed to reach HarchOS API: ${error.message}`);
     }
-
-    return response.json();
   }
 
   async getCarbonIntensity(region?: string): Promise<CarbonData[]> {
@@ -79,3 +95,6 @@ export class HarchOSApiClient {
     return this.request('/status');
   }
 }
+
+// Export a singleton instance
+export const harchosApi = new HarchOSApiClient();

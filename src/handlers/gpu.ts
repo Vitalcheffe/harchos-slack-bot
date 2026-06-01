@@ -14,7 +14,7 @@ export async function handleGpuCommand(command: SlashCommand): Promise<string> {
 
     if (!data || data.length === 0) {
       return cluster
-        ? `No GPU cluster found with name *${cluster}*. Check the cluster name and try again.`
+        ? `No GPU cluster found with name *${cluster}*. Check the name and try again.`
         : 'No GPU clusters available right now. Try again later.';
     }
 
@@ -22,11 +22,19 @@ export async function handleGpuCommand(command: SlashCommand): Promise<string> {
 
     for (const c of data) {
       const emoji = statusEmoji(c.status);
-      text += `\n${emoji} *${c.name}* (${c.id})`;
-      text += `\n   Region: ${c.region} | GPUs Available: ${c.gpusAvailable} | Status: ${c.status}`;
+      text += `\n${emoji} *${c.name}* \`${c.id}\``;
+      text += `\n   📍 Region: ${c.region}`;
+      text += `\n   🔢 GPUs Available: ${c.gpusAvailable}`;
+      text += `\n   📊 Status: ${c.status}`;
     }
 
+    // Summary
+    const totalGpus = data.reduce((sum, c) => sum + c.gpusAvailable, 0);
+    const onlineClusters = data.filter(c => c.status === 'online' || c.status === 'operational').length;
+    
+    text += `\n\n*Summary:* ${onlineClusters}/${data.length} clusters online | ${totalGpus} GPUs available`;
     text += `\n\n_Tip: Use \`/harchos gpu [cluster]\` for details on a specific cluster_`;
+
     return text;
   } catch (error: any) {
     console.error('GPU command error:', error.message);

@@ -84,6 +84,7 @@ app.command('/harchos', async ({ command, ack, respond }) => {
   }
 });
 
+// Start the app
 (async () => {
   try {
     await app.start();
@@ -94,3 +95,25 @@ app.command('/harchos', async ({ command, ack, respond }) => {
     process.exit(1);
   }
 })();
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('\nShutting down gracefully...');
+  await app.stop();
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  console.log('\nReceived SIGTERM, shutting down...');
+  await app.stop();
+  process.exit(0);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled promise rejection:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught exception:', error);
+  process.exit(1);
+});

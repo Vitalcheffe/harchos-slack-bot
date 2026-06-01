@@ -5,6 +5,7 @@ import { App } from '@slack/bolt';
 import dotenv from 'dotenv';
 import { handleHelpCommand } from './handlers/help';
 import { handleCarbonCommand } from './handlers/carbon';
+import { handleGpuCommand } from './handlers/gpu';
 
 dotenv.config();
 
@@ -22,7 +23,6 @@ const app = new App({
   appToken: SLACK_APP_TOKEN,
 });
 
-// App mention handler
 app.event('app_mention', async ({ event, say }) => {
   try {
     await say({
@@ -33,7 +33,6 @@ app.event('app_mention', async ({ event, say }) => {
   }
 });
 
-// /harchos command router
 app.command('/harchos', async ({ command, ack, respond }) => {
   await ack();
 
@@ -46,6 +45,9 @@ app.command('/harchos', async ({ command, ack, respond }) => {
       break;
     case 'carbon':
       await respond({ text: await handleCarbonCommand(command), response_type: 'in_channel' });
+      break;
+    case 'gpu':
+      await respond({ text: await handleGpuCommand(command), response_type: 'in_channel' });
       break;
     default:
       await respond({

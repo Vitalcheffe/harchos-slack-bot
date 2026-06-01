@@ -1,0 +1,37 @@
+{
+  "display_information": {
+    "name": "HarchOS Bot",
+    "description": "Carbon-aware compute commands for HarchOS",
+    "background_color": "#1a1a2e",
+    "long_description": "HarchOS Slack Bot lets you query the HarchOS carbon-aware compute platform directly from Slack. Check carbon intensity, GPU availability, pricing, and system status with simple slash commands."
+  },
+  "features": {
+    "bot_user": {
+      "display_name": "HarchOS",
+      "always_online": true
+    },
+    "slash_commands": [
+      {
+        "command": "/harchos",
+        "description": "HarchOS compute commands",
+        "usage_hint": "help | carbon | gpu | price | status",
+        "should_escape": false
+      }
+    ]
+  },
+  "oauth_config": {
+    "scopes": {
+      "bot": [
+        "commands",
+        "chat:write",
+        "chat:write.public",
+        "app_mentions:read"
+      ]
+    }
+  },
+  "settings": {
+    "org_deploy_enabled": false,
+    "socket_mode_enabled": true,
+    "token_rotation_enabled": false
+  }
+}

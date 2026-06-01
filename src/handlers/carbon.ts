@@ -3,6 +3,7 @@
 
 import { SlashCommand } from '@slack/bolt';
 import { harchosApi } from '../services/harchos-api';
+import { sanitizeInput, validateRegion } from '../utils/validators';
 
 function getCarbonEmoji(intensity: number): string {
   if (intensity <= 100) return '🟢';
@@ -20,7 +21,16 @@ function getCarbonLabel(intensity: number): string {
 }
 
 export async function handleCarbonCommand(command: SlashCommand): Promise<string> {
-  const region = command.text.replace('carbon', '').trim();
+  const rawRegion = command.text.replace('carbon', '').trim();
+  const region = sanitizeInput(rawRegion);
+
+  // Validate region if specified
+  if (region) {
+    const validation = validateRegion(region);
+    if (!validation.valid) {
+      return `⚠️ ${validation.error}`;
+    }
+  }
 
   try {
     const data = await harchosApi.getCarbonIntensity(region || undefined);
